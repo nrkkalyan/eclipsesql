@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<!--
+	Ant build file SQLExplorer P2 meta data
+	$Id: build.xml,v 1.5 2011/10/07 16:59:07 hhilbert Exp $
+-->
+<project default="p2" name="sqlexplorer_updatesite" basedir=".">
+
+	<!-- project info -->
+	<property name="Name" value="SQLExplorer" />
+	<property name="name" value="sqlexplorer" />
+	<property name="year" value="2010" />
+
+	<!-- first match sets the property -->
+	<property file="build.properties" />
+	<property file="../build.properties" />
+	<property file="${user.home}/build.properties" />
+
+	<!-- my defaults -->
+	<property name="eclipse" value="/Users/heiko/Apps/eclipse_se_3.6.1/eclipse" />
+	<property name="updatesite" value="${basedir}" />
+		
+	
+	<!-- =============================================================== -->
+	<!-- E N V I R O N M E N T                                           -->
+	<!-- =============================================================== -->
+
+	<target name="display.properties" description="Display common properties values">
+		<echo>
+			[JAVA]
+			os.name             = ${os.name}
+			java.class.path     = ${java.class.path}
+			java.home           = ${java.home}
+			user.home           = ${user.home}
+			[ANT]
+			ant.home            = ${ant.home}
+			build.sysclasspath  = ${build.sysclasspath}
+			[PROJECT]
+			eclipse             = ${eclipse}
+			updatesite          = ${updatesite}
+		</echo>
+	</target>
+
+	<target name="usage">
+		<echo message="Run ant -projecthelp to get a list of targets to run" />
+	</target>
+
+
+	<!-- =============================================================== -->
+	<!-- P2                                                              -->
+	<!-- =============================================================== -->
+
+	<target name="p2" depends="display.properties">
+		<mkdir dir="repo"/>
+		<copy todir="." overwrite="true">
+			<fileset dir="../sqlexplorer_feature/exported">
+				<include name="features/*.jar"/>
+				<include name="plugins/*.jar"/>
+			</fileset>
+		</copy>
+		<antcall target="p2_build"></antcall>
+	</target>
+
+	<target name="p2_build">
+		<mkdir dir="repo"/>
+		<exec executable="${eclipse}">
+			<arg line=" -application org.eclipse.equinox.p2.publisher.UpdateSitePublisher"/>
+			<arg line=" -metadataRepository file:/${basedir}/repo" />
+			<arg line=" -artifactRepository file:/${basedir}/repo" />
+			<arg line=" -source ${updatesite}"/>
+			<arg line=" -metadataRepositoryName &quot;${Name} Updates&quot;" />
+			<arg line=" -artifactRepositoryName &quot;${Name} Updates&quot;" />
+			<arg line=" -publishArtifacts" />
+		</exec>
+		<copy file="repo/content.xml" toFile="content.xml">
+			<filterchain>
+				<tokenfilter>
+				    <replaceregex pattern="file:/.*/site.xml" replace="net.sourceforge.sqlexplorer.category" flags="gi"/>
+				</tokenfilter>
+			</filterchain>
+		</copy>
+		<copy file="repo/artifacts.xml" toFile="artifacts.xml"/>
+		<delete dir="repo"/>
+		<!--
+		<delete file="artifacts.xml"/>
+		<delete file="content.xml"/>
+		<exec executable="${eclipse}">
+			<arg line=" -application org.eclipse.equinox.p2.metadata.generator.EclipseGenerator"/>
+			<arg line=" -updateSite ${updatesite}"/>
+			<arg line=" -metadataRepositoryName &quot;${Name} Updates&quot;" />
+			<arg line=" -artifactRepositoryName &quot;${Name} Updates&quot;" />
+			<arg line=" -noDefaultIUs" />
+			<arg line=" -reusePack200Files" />
+			<arg line=" -vmargs -Xmx256m" />
+		</exec>
+		-->
+	</target>
+
+</project>
